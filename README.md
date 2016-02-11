@@ -28,6 +28,11 @@ iex> Metrics.Counter.reset "my_counter"
 
 iex> Metrics.Counter.get "my_counter"
 0
+
+# Get all data
+
+iex> Metrics.report
+%{counters: %{"my_counter" => 0}}
 ```
 
 ## Installation
