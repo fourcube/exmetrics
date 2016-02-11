@@ -1,5 +1,7 @@
 # Metrics
 
+[![Build Status](https://travis-ci.org/fourcube/metrics.svg?branch=master)](https://travis-ci.org/fourcube/metrics)
+
 This elixir project is inspired by the excellent [codahale/metrics](https://github.com/codahale/metrics) library.
 
 It library provides counters, ~~gauges~~ and ~~histograms~~ for instrumenting an application.
