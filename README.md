@@ -33,7 +33,7 @@ iex> Metrics.Counter.get "my_counter"
 
 # Get all data
 
-iex> Metrics.report
+iex> Metrics.snapshot
 %{counters: %{"my_counter" => 0}}
 ```
 

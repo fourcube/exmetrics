@@ -3,9 +3,9 @@ defmodule Metrics do
   require Logger
 
   @doc """
-  Returns all registered metrics.  
+  Returns all registered metrics.
   """
-  def report do
+  def snapshot do
     Metrics.Worker.state
   end
 
