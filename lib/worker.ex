@@ -21,6 +21,7 @@ defmodule Metrics.Worker do
     GenServer.cast Metrics, {:set_counter, name, n}
   end
 
+  @doc "Snapshot current state."
   def state() do
     GenServer.call Metrics, :get_state
   end
