@@ -1,3 +1,4 @@
-%{"edown": {:git, "https://github.com/uwiger/edown.git", "d864427506cd93a00712b7c3b9a89d793e7e1600", [branch: "master"]},
+%{"dialyxir": {:hex, :dialyxir, "0.3.3"},
+  "edown": {:git, "https://github.com/uwiger/edown.git", "d864427506cd93a00712b7c3b9a89d793e7e1600", [branch: "master"]},
   "fqc": {:git, "https://github.com/project-fifo/fqc.git", "883013e96408f98b29d016fa094b8ac7410c364e", [branch: "master"]},
   "hdr_histogram": {:git, "https://github.com/HdrHistogram/hdr_histogram_erl.git", "72f8c419181cce7492a8a8b1259c6c06db6ddb08", [tag: "0.2.6"]}}
