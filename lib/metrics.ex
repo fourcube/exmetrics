@@ -4,6 +4,15 @@ defmodule Metrics do
 
   @doc """
   Returns all registered metrics.
+
+  iex> Metrics.Counter.incr("sample_counter")
+  iex> Metrics.Gauge.set("sample_gauge", 1)
+  iex> snapshot = Metrics.snapshot
+  iex> get_in(snapshot, [:counters, "sample_counter"])
+  1
+  iex> get_in(snapshot, [:gauges, "sample_gauge"])
+  1
+
   """
   @spec snapshot() :: map()
   def snapshot do
