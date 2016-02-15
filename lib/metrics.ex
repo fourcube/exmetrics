@@ -9,6 +9,53 @@ defmodule Metrics do
     Metrics.Worker.state
   end
 
+  defmodule Gauge do
+    @moduledoc """
+    Gauges measure numeric values of a metric at the current point in time.
+
+    e.g. "currently active threads"
+    """
+
+    @doc ~S"""
+    Set a gauge to a certain value.
+
+      iex> Metrics.Gauge.set "foo", 1
+      iex> Metrics.Gauge.get "foo"
+      1
+    """
+    def set(name, value) do
+      Metrics.Worker.set_gauge(name, value)
+    end
+
+    @doc ~S"""
+    Get the value of a gauge.
+
+      iex> Metrics.Gauge.set "bar", 10
+      iex> Metrics.Gauge.get "bar"
+      10
+
+      iex> Metrics.Gauge.get "doesnt_exist"
+      nil
+    """
+    def get(name) do
+      Metrics.Worker.get_gauge(name)
+    end
+
+    @doc ~S"""
+    Remove a gauge from the metrics collection.
+
+      iex> Metrics.Gauge.set "to_be_removed", 10
+      iex> Metrics.Gauge.get "to_be_removed"
+      10
+      iex> Metrics.Gauge.remove "to_be_removed"
+      iex> Metrics.Gauge.get "to_be_removed"
+      nil
+    """
+    def remove(name) do
+      Metrics.Worker.remove_gauge(name)
+    end
+  end
+
   defmodule Counter do
     @moduledoc """
     Counters represent integer values that increase monotonically.
@@ -42,6 +89,9 @@ defmodule Metrics do
       iex> Metrics.Counter.add "baz", 42
       iex> Metrics.Counter.get "baz"
       42
+
+      iex> Metrics.Counter.get "doesnt_exist"
+      nil
     """
     def get(name) do
       Metrics.Worker.get_counter(name)
@@ -50,8 +100,8 @@ defmodule Metrics do
     @doc ~S"""
     Reset counter 'name' to 0.
 
-      iex> Metrics.Counter.reset "foo"
-      iex> Metrics.Counter.get "foo"
+      iex> Metrics.Counter.reset "reset_to_zero"
+      iex> Metrics.Counter.get "reset_to_zero"
       0
     """
     def reset(name) do
@@ -61,8 +111,8 @@ defmodule Metrics do
     @doc ~S"""
     Reset counter 'name' to n.
 
-      iex> Metrics.Counter.reset "foo", 42
-      iex> Metrics.Counter.get "foo"
+      iex> Metrics.Counter.reset "reset_to_fourty_two", 42
+      iex> Metrics.Counter.get "reset_to_fourty_two"
       42
     """
     def reset(name, n) when is_integer(n) do
