@@ -3,7 +3,7 @@ defmodule Metrics.Worker do
   require Logger
 
   def start_link() do
-    GenServer.start_link(__MODULE__, %{counters: %{}, gauges: %{}}, name: Metrics)
+    GenServer.start_link(__MODULE__, %{counters: %{}, gauges: %{}, histograms: %{}}, name: Metrics)
   end
 
   ###
@@ -50,6 +50,23 @@ defmodule Metrics.Worker do
     GenServer.cast Metrics, {:set, [:counters, name], n}
   end
 
+  @doc "Create a new histogram instance."
+  def new_histogram(name, max, sigfigs) when is_integer(max) and is_integer(sigfigs) do
+    {:ok, histogram} = :hdr_histogram.open(max, sigfigs)
+    GenServer.cast Metrics, {:set, [:histograms, name], histogram}
+  end
+
+  @doc "Register a value inside a histogram."
+  def record_histogram_value(name, value) when is_integer(value) do
+    GenServer.cast Metrics, {:record_h, [:histograms, name], value}
+  end
+
+  @doc "Get a full histogram."
+  def get_histogram(name) do
+    GenServer.call Metrics, {:get, [:histograms, name]}
+  end
+
+
   ###
   # Server Functions
   ###
@@ -74,6 +91,12 @@ defmodule Metrics.Worker do
 
   def handle_cast({:remove, path}, state) do
     state = update_in(state, path, fn _ -> nil end)
+    {:noreply, state}
+  end
+
+  def handle_cast({:record_h, path, value}, state) do
+    histogram = get_in(state, path)
+    :hdr_histogram.record(histogram, value)
     {:noreply, state}
   end
 

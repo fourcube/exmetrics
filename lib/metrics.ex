@@ -147,6 +147,56 @@ defmodule Metrics do
     end
   end
 
+  defmodule Histogram do
+    @moduledoc """
+    Provides histograms based on
+    (hdr_histogram)[https://github.com/HdrHistogram/hdr_histogram_erl.git].
+
+    Use a histogram to track the distribution of a stream of values (e.g., the
+    latency associated with HTTP requests).
+    """
+    @doc """
+    Create a new histogram.
+
+      iex> Metrics.Histogram.new "sample_histogram", 1000000, 3
+      :ok
+    """
+    @spec new(String.t, integer, integer) :: atom
+    def new(name, max, sigfigs \\ 3) do
+      Metrics.Worker.new_histogram(name, max, sigfigs)
+    end
+
+    @doc """
+    Get a full histogram.
+
+      iex> Metrics.Histogram.new "h1", 1000, 3
+      :ok
+      iex> h = Metrics.Histogram.get "h1"
+      iex> :hdr_histogram.get_total_count(h)
+      0
+
+    """
+    @spec get(String.t) :: :hdr_histogram
+    def get(name) do
+      Metrics.Worker.get_histogram(name)
+    end
+
+    @doc """
+    Record a value in a histogram.
+
+      iex> Metrics.Histogram.new "h2", 1000, 3
+      :ok
+      iex> Metrics.Histogram.record("h2", 5)
+      iex> Metrics.Histogram.get("h2") |> :hdr_histogram.max
+      5
+
+    """
+    @spec record(String.t, integer) :: atom
+    def record(name, value) do
+      Metrics.Worker.record_histogram_value(name, value)
+    end
+  end
+
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
