@@ -3,7 +3,7 @@ defmodule Metrics.Mixfile do
 
   def project do
     [app: :metrics,
-     version: "0.1.0",
+     version: "0.1.1",
      name: "metrics",
      elixir: "~> 1.2-rc",
      build_embedded: Mix.env == :prod,
