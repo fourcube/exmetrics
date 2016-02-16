@@ -5,11 +5,13 @@ defmodule Metrics.Mixfile do
     [app: :metrics,
      version: "0.1.1",
      name: "metrics",
+     description: "metrics provides counters, gauges and histograms for instrumenting an elixir application."
      elixir: "~> 1.2-rc",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      source_url: "https://github.com/fourcube/metrics",
      deps: deps,
+     licenses: ["MIT"],
      docs: [extras: ["README.md"]]]
   end
 
