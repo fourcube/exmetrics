@@ -4,7 +4,7 @@
 
 This elixir project is inspired by the excellent [codahale/metrics](https://github.com/codahale/metrics) library.
 
-It library provides counters, gauges and histograms for instrumenting an application.
+It provides counters, gauges and histograms for instrumenting an elixir application.
 
 
 ## Usage
