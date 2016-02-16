@@ -1,6 +1,7 @@
 # exmetrics
 
 [![Build Status](https://travis-ci.org/fourcube/metrics.svg?branch=master)](https://travis-ci.org/fourcube/metrics)
+[![Docs](https://img.shields.io/badge/docs-hex.pm-blue.svg)](http://hexdocs.pm/exmetrics)
 
 This elixir project is inspired by the excellent [codahale/metrics](https://github.com/codahale/metrics) library.
 
