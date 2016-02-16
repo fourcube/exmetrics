@@ -64,7 +64,7 @@ See [hdr_histogram_erl](https://github.com/HdrHistogram/hdr_histogram_erl) for s
 iex> Metrics.Histogram.new "my_histogram", 1000000, 3
 :ok
 
-# This automatically registers gauges for
+# This automatically registers gauges for the histograms
 #   50th percentile
 #   75th percentile
 #   90th percentile
@@ -80,7 +80,22 @@ iex> Metrics.Histogram.new "my_histogram", 1000000, 3
 iex> Metrics.Histogram.record "my_histogram", 100
 :ok
 
+iex> Enum.each 0..100, &(Metrics.Histogram.record "my_histogram", &1)
+
+# Get a snapshot of all data
+iex> Metrics.snapshot
+%{counters: %{},
+  gauges: %{"my_histogram.Count" => 102, "my_histogram.Max" => 100,
+    "my_histogram.Mean" => 50.5, "my_histogram.Min" => 0,
+    "my_histogram.P50" => 50.0, "my_histogram.P75" => 76.0,
+    "my_histogram.P90" => 91.0, "my_histogram.P95" => 96.0,
+    "my_histogram.P99" => 100.0, "my_histogram.P999" => 100.0,
+    "my_histogram.Stddev" => 29.4}, histograms: %{"my_histogram" => ""}}
+
 # Remove a histogram
+iex> Metrics.Histogram.remove "my_histogram"
+:ok
+
 ```
 
 
