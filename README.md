@@ -4,10 +4,12 @@
 
 This elixir project is inspired by the excellent [codahale/metrics](https://github.com/codahale/metrics) library.
 
-It library provides counters, ~~gauges~~ and ~~histograms~~ for instrumenting an application.
+It library provides counters, gauges and histograms for instrumenting an application.
 
 
 ## Usage
+
+### Counters
 
 ```elixir
 # Increment a counter
@@ -30,12 +32,57 @@ iex> Metrics.Counter.reset "my_counter"
 
 iex> Metrics.Counter.get "my_counter"
 0
-
-# Get all data
-
-iex> Metrics.snapshot
-%{counters: %{"my_counter" => 0}}
 ```
+
+### Gauges
+
+```elixir
+# Set gauge to a value
+iex> Metrics.Gauge.set "my_gauge", 10
+:ok
+# or
+# Set gauge to a function which is lazily evaluated
+iex> Metrics.Gauge.set "my_gauge", fn -> 10 end
+
+# Get value of a gauge
+iex> Metrics.Gauge.get "my_gauge"
+10
+
+# Remove gauge
+iex> Metrics.Gauge.remove "my_gauge"
+:ok
+iex> Metrics.Gauge.get "my_gauge"
+nil
+```
+
+### Histograms
+
+See [hdr_histogram_erl](https://github.com/HdrHistogram/hdr_histogram_erl) for semantics.
+
+```elixir
+# Create a new histogram with max value 1000000 and 3 significant figures precision
+iex> Metrics.Histogram.new "my_histogram", 1000000, 3
+:ok
+
+# This automatically registers gauges for
+#   50th percentile
+#   75th percentile
+#   90th percentile
+#   95th percentile
+#   99th percentile
+#   99.9th percentile
+#   Max histogram value
+#   Min histogram value
+#   Standard deviation
+#   Total count
+
+# Record a value inside a histogram
+iex> Metrics.Histogram.record "my_histogram", 100
+:ok
+
+# Remove a histogram
+```
+
 
 ## Installation
 

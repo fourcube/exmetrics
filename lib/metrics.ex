@@ -17,6 +17,23 @@ defmodule Metrics do
   @spec snapshot() :: map()
   def snapshot do
     Metrics.Worker.state
+    |> update_in([:gauges], &realize_gauge/1)
+  end
+
+  defp realize_gauge(gauge) when is_function(gauge), do: apply_no_args(gauge)
+  defp realize_gauge(gauge_map) when is_map(gauge_map) do
+    gauge_map
+    |> Enum.reduce(%{}, fn {key, func}, acc ->
+      Map.put(acc, key, apply_no_args(func))
+    end)
+  end
+
+  defp apply_no_args(func) when is_nil(func) do
+    nil
+  end
+
+  defp apply_no_args(func) do
+    apply(func, [])
   end
 
   defmodule Gauge do
@@ -27,6 +44,13 @@ defmodule Metrics do
     """
 
     @doc ~S"""
+    Set a gauge to return the value of a lazy evaluated function.
+
+      iex> Metrics.Gauge.set "foo_fn", fn -> 1 end
+      :ok
+      iex> Metrics.Gauge.get "foo_fn"
+      1
+
     Set a gauge to a certain value.
 
       iex> Metrics.Gauge.set "foo", 1
@@ -34,9 +58,14 @@ defmodule Metrics do
       iex> Metrics.Gauge.get "foo"
       1
     """
+    @spec set(String.t, function) :: atom
+    def set(name, func) when is_function(func) do
+      Metrics.Worker.set_gauge(name, func)
+    end
+
     @spec set(String.t, integer) :: atom
     def set(name, value) do
-      Metrics.Worker.set_gauge(name, value)
+      Metrics.Worker.set_gauge(name, fn -> value end)
     end
 
     @doc ~S"""
@@ -155,15 +184,46 @@ defmodule Metrics do
     Use a histogram to track the distribution of a stream of values (e.g., the
     latency associated with HTTP requests).
     """
+
+    # All automatically associated gauges have to be removed before a histogram is removed.
+    @automatic_histogram_gauges [
+      "P50", "P75", "P90", "P95", "P99", "P999", # Percentiles
+      "Max", "Min", "Mean", "Stddev", "Count"
+    ]
+    def automatic_histogram_gauges, do: @automatic_histogram_gauges
+
+
     @doc """
     Create a new histogram.
 
       iex> Metrics.Histogram.new "sample_histogram", 1000000, 3
       :ok
+      iex> Metrics.Gauge.get "sample_histogram.P50"
+      0.0
+      # Record some values
+      iex> Enum.each 0..100, &(Metrics.Histogram.record "sample_histogram", &1)
+      iex> Metrics.Gauge.get "sample_histogram.P50"
+      50.0
     """
     @spec new(String.t, integer, integer) :: atom
     def new(name, max, sigfigs \\ 3) do
-      Metrics.Worker.new_histogram(name, max, sigfigs)
+      h = Metrics.Worker.new_histogram(name, max, sigfigs)
+
+      # Register gauges for various percentiles
+      #
+      # The suffixes are listed in the module attribute @automatic_histogram_gauges.
+      # All automatically associated gauges have to be removed before a histogram is removed.
+      Metrics.Gauge.set("#{name}.P50", fn -> :hdr_histogram.percentile(h, 50.0) end)
+      Metrics.Gauge.set("#{name}.P75", fn -> :hdr_histogram.percentile(h, 75.0) end)
+      Metrics.Gauge.set("#{name}.P90", fn -> :hdr_histogram.percentile(h, 90.0) end)
+      Metrics.Gauge.set("#{name}.P95", fn -> :hdr_histogram.percentile(h, 95.0) end)
+      Metrics.Gauge.set("#{name}.P99", fn -> :hdr_histogram.percentile(h, 99.0) end)
+      Metrics.Gauge.set("#{name}.P999", fn -> :hdr_histogram.percentile(h, 99.9) end)
+      Metrics.Gauge.set("#{name}.Max", fn -> :hdr_histogram.max(h) end)
+      Metrics.Gauge.set("#{name}.Min", fn -> :hdr_histogram.min(h) end)
+      Metrics.Gauge.set("#{name}.Mean", fn -> :hdr_histogram.mean(h) end)
+      Metrics.Gauge.set("#{name}.Stddev", fn -> :hdr_histogram.stddev(h) end)
+      Metrics.Gauge.set("#{name}.Count", fn -> :hdr_histogram.get_total_count(h) end)
     end
 
     @doc """
@@ -195,6 +255,22 @@ defmodule Metrics do
     def record(name, value) do
       Metrics.Worker.record_histogram_value(name, value)
     end
+
+    @doc """
+    Remove histogram and clear resources.
+
+      iex> Metrics.Histogram.new "h3", 1000, 3
+      :ok
+      iex> Metrics.Histogram.remove "h3"
+      :ok
+      iex> Metrics.Histogram.get "h3"
+      nil
+    """
+    @spec remove(String.t) :: atom
+    def remove(name) do
+      Metrics.Worker.remove_histogram(name)
+    end
+
   end
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html

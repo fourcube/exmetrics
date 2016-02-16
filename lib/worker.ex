@@ -24,12 +24,20 @@ defmodule Metrics.Worker do
 
   @doc "Get gauge value."
   def get_gauge(name) do
-    GenServer.call Metrics, {:get, [:gauges, name]}
+    v = GenServer.call Metrics, {:get, [:gauges, name]}
+    case v do
+      v when is_function(v) -> apply(v, [])
+      nil -> nil
+    end
   end
 
   @doc "Remove gauge from collection."
   def remove_gauge(name) do
-    GenServer.cast Metrics, {:remove, [:gauges, name]}
+    remove([:gauges, name])
+  end
+
+  defp remove(path) do
+    GenServer.cast Metrics, {:remove, path}
   end
 
   ###
@@ -50,10 +58,15 @@ defmodule Metrics.Worker do
     GenServer.cast Metrics, {:set, [:counters, name], n}
   end
 
+  ###
+  # Histograms
+  ###
+
   @doc "Create a new histogram instance."
   def new_histogram(name, max, sigfigs) when is_integer(max) and is_integer(sigfigs) do
     {:ok, histogram} = :hdr_histogram.open(max, sigfigs)
     GenServer.cast Metrics, {:set, [:histograms, name], histogram}
+    histogram
   end
 
   @doc "Register a value inside a histogram."
@@ -64,6 +77,22 @@ defmodule Metrics.Worker do
   @doc "Get a full histogram."
   def get_histogram(name) do
     GenServer.call Metrics, {:get, [:histograms, name]}
+  end
+
+  def remove_histogram(histogram_name) do
+    case GenServer.call Metrics, {:get, [:histograms, histogram_name]} do
+      nil ->
+        :err_not_avail
+      h ->
+        # Remove all automatically registered gauges.
+        Metrics.Histogram.automatic_histogram_gauges
+        |> Enum.each(fn gauge_name -> remove_gauge "#{histogram_name}.#{gauge_name}" end)
+
+        # Close the histogram
+        :hdr_histogram.close(h)
+        remove([:histograms, histogram_name])
+        :ok
+    end
   end
 
 
@@ -96,7 +125,11 @@ defmodule Metrics.Worker do
 
   def handle_cast({:record_h, path, value}, state) do
     histogram = get_in(state, path)
-    :hdr_histogram.record(histogram, value)
+    case histogram do
+      nil -> nil
+      histogram -> :hdr_histogram.record(histogram, value)
+    end
+
     {:noreply, state}
   end
 
