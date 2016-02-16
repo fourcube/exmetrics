@@ -57,7 +57,7 @@ nil
 
 ### Histograms
 
-See [hdr_histogram_erl](https://github.com/HdrHistogram/hdr_histogram_erl) for semantics.
+See [hdr\_histogram\_erl](https://github.com/HdrHistogram/hdr_histogram_erl) for semantics.
 
 ```elixir
 # Create a new histogram with max value 1000000 and 3 significant figures precision
@@ -106,7 +106,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
   1. Add metrics to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:metrics, "~> 0.0.1"}]
+          [{:metrics, "~> 0.1"}]
         end
 
   2. Ensure metrics is started before your application:

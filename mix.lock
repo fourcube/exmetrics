@@ -3,4 +3,6 @@
   "edown": {:git, "https://github.com/uwiger/edown.git", "d864427506cd93a00712b7c3b9a89d793e7e1600", [branch: "master"]},
   "ex_doc": {:hex, :ex_doc, "0.11.4"},
   "fqc": {:git, "https://github.com/project-fifo/fqc.git", "883013e96408f98b29d016fa094b8ac7410c364e", [branch: "master"]},
-  "hdr_histogram": {:git, "https://github.com/HdrHistogram/hdr_histogram_erl.git", "72f8c419181cce7492a8a8b1259c6c06db6ddb08", [tag: "0.2.6"]}}
+  "hdr_histogram": {:git, "https://github.com/HdrHistogram/hdr_histogram_erl.git", "72f8c419181cce7492a8a8b1259c6c06db6ddb08", [tag: "0.2.6"]},
+  "hoedown": {:git, "https://github.com/hoedown/hoedown.git", "980b9c549b4348d50b683ecee6abee470b98acda", []},
+  "markdown": {:git, "https://github.com/devinus/markdown.git", "9b3beaf69a9b9c6450526c41d591a94d2eedf1e8", []}}

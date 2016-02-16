@@ -1,7 +1,9 @@
 defmodule Metrics.Rotator do
+  @moduledoc false
   require Logger
-  @moduledoc """
-  Rotates a windowed histogram every minute.
+
+  @doc """
+  Start a task that rotates a windowed histogram every minute.
   """
   def start_link do
     Task.start_link(fn -> rotate end)

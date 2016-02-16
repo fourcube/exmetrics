@@ -1,4 +1,5 @@
 defmodule Metrics.Worker do
+  @moduledoc false
   use GenServer
   require Logger
 

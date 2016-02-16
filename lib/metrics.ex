@@ -5,13 +5,13 @@ defmodule Metrics do
   @doc """
   Returns all registered metrics.
 
-  iex> Metrics.Counter.incr("sample_counter")
-  iex> Metrics.Gauge.set("sample_gauge", 1)
-  iex> snapshot = Metrics.snapshot
-  iex> get_in(snapshot, [:counters, "sample_counter"])
-  1
-  iex> get_in(snapshot, [:gauges, "sample_gauge"])
-  1
+      iex> Metrics.Counter.incr("sample_counter")
+      iex> Metrics.Gauge.set("sample_gauge", 1)
+      iex> snapshot = Metrics.snapshot
+      iex> get_in(snapshot, [:counters, "sample_counter"])
+      1
+      iex> get_in(snapshot, [:gauges, "sample_gauge"])
+      1
 
   """
   @spec snapshot() :: map()
@@ -67,17 +67,17 @@ defmodule Metrics do
     @doc ~S"""
     Set a gauge to return the value of a lazy evaluated function.
 
-      iex> Metrics.Gauge.set "foo_fn", fn -> 1 end
-      :ok
-      iex> Metrics.Gauge.get "foo_fn"
-      1
+        iex> Metrics.Gauge.set "foo_fn", fn -> 1 end
+        :ok
+        iex> Metrics.Gauge.get "foo_fn"
+        1
 
     Set a gauge to a certain value.
 
-      iex> Metrics.Gauge.set "foo", 1
-      :ok
-      iex> Metrics.Gauge.get "foo"
-      1
+        iex> Metrics.Gauge.set "foo", 1
+        :ok
+        iex> Metrics.Gauge.get "foo"
+        1
     """
     @spec set(String.t, function) :: atom
     def set(name, func) when is_function(func) do
@@ -92,13 +92,13 @@ defmodule Metrics do
     @doc ~S"""
     Get the value of a gauge.
 
-      iex> Metrics.Gauge.set "bar", 10
-      :ok
-      iex> Metrics.Gauge.get "bar"
-      10
+        iex> Metrics.Gauge.set "bar", 10
+        :ok
+        iex> Metrics.Gauge.get "bar"
+        10
 
-      iex> Metrics.Gauge.get "doesnt_exist"
-      nil
+        iex> Metrics.Gauge.get "doesnt_exist"
+        nil
     """
     @spec get(String.t) :: (integer | nil)
     def get(name) do
@@ -108,16 +108,16 @@ defmodule Metrics do
     @doc ~S"""
     Remove a gauge from the metrics collection.
 
-      iex> Metrics.Gauge.set "to_be_removed", 10
-      :ok
-      iex> Metrics.Gauge.get "to_be_removed"
-      10
-      iex> Metrics.Gauge.remove "to_be_removed"
-      :ok
-      iex> Metrics.Gauge.get "to_be_removed"
-      nil
+        iex> Metrics.Gauge.set "to_be_removed", 10
+        :ok
+        iex> Metrics.Gauge.get "to_be_removed"
+        10
+        iex> Metrics.Gauge.remove "to_be_removed"
+        :ok
+        iex> Metrics.Gauge.get "to_be_removed"
+        nil
     """
-    @spec get(String.t) :: atom
+    @spec remove(String.t) :: atom
     def remove(name) do
       Metrics.Worker.remove_gauge(name)
     end
@@ -131,10 +131,10 @@ defmodule Metrics do
     @doc ~S"""
     Increments the counter 'name' by 1.
 
-      iex> Metrics.Counter.incr "foo"
-      :ok
-      iex> Metrics.Counter.get "foo"
-      1
+        iex> Metrics.Counter.incr "foo"
+        :ok
+        iex> Metrics.Counter.get "foo"
+        1
     """
     @spec incr(String.t) :: atom
     def incr(name) do
@@ -144,10 +144,10 @@ defmodule Metrics do
     @doc ~S"""
     Increments the counter 'name' by n.
 
-      iex> Metrics.Counter.add "bar", 5
-      :ok
-      iex> Metrics.Counter.get "bar"
-      5
+        iex> Metrics.Counter.add "bar", 5
+        :ok
+        iex> Metrics.Counter.get "bar"
+        5
     """
     @spec add(String.t, integer) :: atom
     def add(name, n) when is_integer(n)  do
@@ -157,13 +157,13 @@ defmodule Metrics do
     @doc ~S"""
     Gets the value of a counter.
 
-      iex> Metrics.Counter.add "baz", 42
-      :ok
-      iex> Metrics.Counter.get "baz"
-      42
+        iex> Metrics.Counter.add "baz", 42
+        :ok
+        iex> Metrics.Counter.get "baz"
+        42
 
-      iex> Metrics.Counter.get "doesnt_exist"
-      nil
+        iex> Metrics.Counter.get "doesnt_exist"
+        nil
     """
     @spec get(String.t) :: integer | nil
     def get(name) do
@@ -173,10 +173,10 @@ defmodule Metrics do
     @doc ~S"""
     Reset counter 'name' to 0.
 
-      iex> Metrics.Counter.reset "reset_to_zero"
-      :ok
-      iex> Metrics.Counter.get "reset_to_zero"
-      0
+        iex> Metrics.Counter.reset "reset_to_zero"
+        :ok
+        iex> Metrics.Counter.get "reset_to_zero"
+        0
     """
     @spec reset(String.t) :: atom
     def reset(name) do
@@ -186,10 +186,10 @@ defmodule Metrics do
     @doc ~S"""
     Reset counter 'name' to n.
 
-      iex> Metrics.Counter.reset "reset_to_fourty_two", 42
-      :ok
-      iex> Metrics.Counter.get "reset_to_fourty_two"
-      42
+        iex> Metrics.Counter.reset "reset_to_fourty_two", 42
+        :ok
+        iex> Metrics.Counter.get "reset_to_fourty_two"
+        42
     """
     @spec reset(String.t, integer) :: atom
     def reset(name, n) when is_integer(n) do
@@ -200,13 +200,16 @@ defmodule Metrics do
   defmodule Histogram do
     @moduledoc """
     Provides histograms based on
-    (hdr_histogram)[https://github.com/HdrHistogram/hdr_histogram_erl.git].
+    [hdr_histogram](https://github.com/HdrHistogram/hdr_histogram_erl.git).
 
     Use a histogram to track the distribution of a stream of values (e.g., the
     latency associated with HTTP requests).
+
+    Before loading data from a histogram, create a snapshot via Metrics.snapshot/0.
     """
 
     # All automatically associated gauges have to be removed before a histogram is removed.
+    @doc false
     @automatic_histogram_gauges [
       "P50", "P75", "P90", "P95", "P99", "P999", # Percentiles
       "Max", "Min", "Mean", "Stddev", "Count"
@@ -217,17 +220,17 @@ defmodule Metrics do
     @doc """
     Create a new histogram.
 
-      iex> Metrics.Histogram.new "sample_histogram", 1000000, 3
-      :ok
-      iex> Metrics.Gauge.get "sample_histogram.P50"
-      0.0
-      # Record some values
-      iex> Enum.each 0..100, &(Metrics.Histogram.record "sample_histogram", &1)
-      :ok
-      # A snapshot is required before histogram values are up to date
-      iex> Metrics.snapshot
-      iex> Metrics.Gauge.get "sample_histogram.P50"
-      50.0
+        iex> Metrics.Histogram.new "sample_histogram", 1000000, 3
+        :ok
+        iex> Metrics.Gauge.get "sample_histogram.P50"
+        0.0
+        # Record some values
+        iex> Enum.each 0..100, &(Metrics.Histogram.record "sample_histogram", &1)
+        :ok
+        # A snapshot is required before histogram values are up to date
+        iex> Metrics.snapshot
+        iex> Metrics.Gauge.get "sample_histogram.P50"
+        50.0
     """
     @spec new(String.t, integer, integer) :: atom
     def new(name, max, sigfigs \\ 3) do
@@ -253,14 +256,13 @@ defmodule Metrics do
     defp percentile(name, pct) do
       # Load the 'merged' histogram view
       get(name)
-      |> get_in([:merged])
       |> :hdr_histogram.percentile(pct)
     end
 
     defp hdr_histogram_apply(name, func) when is_bitstring(func) do
       # Load the 'merged' histogram view.
       # It is built when snapshot() is invoked.
-      h = get(name)[:merged]
+      h = get(name)
 
       apply(:hdr_histogram, String.to_atom(func), [h])
     end
@@ -268,26 +270,27 @@ defmodule Metrics do
     @doc """
     Get a full histogram.
 
-      iex> Metrics.Histogram.new "h1", 1000, 3
-      :ok
-      iex> h = Metrics.Histogram.get("h1")[:current]
-      iex> :hdr_histogram.get_total_count(h)
-      0
+        iex> Metrics.Histogram.new "h1", 1000, 3
+        :ok
+        iex> h = Metrics.Histogram.get "h1"
+        iex> :hdr_histogram.get_total_count(h)
+        0
 
     """
     @spec get(String.t) :: :hdr_histogram
     def get(name) do
-      Metrics.Worker.get_histogram(name)
+      Metrics.Worker.get_histogram(name)[:merged]
     end
 
     @doc """
     Record a value in a histogram.
 
-      iex> Metrics.Histogram.new "h2", 1000, 3
-      :ok
-      iex> Metrics.Histogram.record("h2", 5)
-      iex> Metrics.Histogram.get("h2")[:current] |> :hdr_histogram.max
-      5
+        iex> Metrics.Histogram.new "h2", 1000, 3
+        :ok
+        iex> Metrics.Histogram.record "h2", 5
+        iex> Metrics.snapshot
+        iex> Metrics.Histogram.get("h2") |> :hdr_histogram.max
+        5
 
     """
     @spec record(String.t, integer) :: atom
@@ -298,12 +301,12 @@ defmodule Metrics do
     @doc """
     Remove histogram and clear resources.
 
-      iex> Metrics.Histogram.new "h3", 1000, 3
-      :ok
-      iex> Metrics.Histogram.remove "h3"
-      :ok
-      iex> Metrics.Histogram.get "h3"
-      nil
+        iex> Metrics.Histogram.new "h3", 1000, 3
+        :ok
+        iex> Metrics.Histogram.remove "h3"
+        :ok
+        iex> Metrics.Histogram.get "h3"
+        nil
     """
     @spec remove(String.t) :: atom
     def remove(name) do
@@ -311,8 +314,7 @@ defmodule Metrics do
     end
   end
 
-  # See http://elixir-lang.org/docs/stable/elixir/Application.html
-  # for more information on OTP Applications
+  @doc false
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
