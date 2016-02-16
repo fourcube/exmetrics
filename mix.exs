@@ -30,8 +30,11 @@ defmodule Metrics.Mixfile do
   defp deps do
     [
       {:hdr_histogram, git: "https://github.com/HdrHistogram/hdr_histogram_erl.git", tag: "0.2.6"},
+
       # Development only
-      {:dialyxir, "~> 0.3", only: [:dev]}
+      {:dialyxir, "~> 0.3", only: :dev},
+      {:earmark, "~> 0.1", only: :dev},
+      {:ex_doc, "~> 0.11", only: :dev}
     ]
   end
 end
