@@ -2,16 +2,20 @@ defmodule Metrics.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :metrics,
+    [app: :exmetrics,
      version: "0.1.1",
-     name: "metrics",
-     description: "metrics provides counters, gauges and histograms for instrumenting an elixir application."
+     name: "exmetrics",
+     description: "Metrics provides counters, gauges and histograms for instrumenting an elixir application.",
      elixir: "~> 1.2-rc",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      source_url: "https://github.com/fourcube/metrics",
      deps: deps,
-     licenses: ["MIT"],
+     package: [
+       files: ["lib", "mix.exs", "README*", "LICENSE*"],
+       licenses: ["MIT"],
+       maintainers: ["Chris Grieger"]
+     ],
      docs: [extras: ["README.md"]]]
   end
 

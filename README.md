@@ -1,4 +1,4 @@
-# Metrics
+# exmetrics
 
 [![Build Status](https://travis-ci.org/fourcube/metrics.svg?branch=master)](https://travis-ci.org/fourcube/metrics)
 
@@ -103,14 +103,14 @@ iex> Metrics.Histogram.remove "my_histogram"
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
 
-  1. Add metrics to your list of dependencies in `mix.exs`:
+  1. Add exmetrics to your list of dependencies in `mix.exs`:
 
         def deps do
           [{:metrics, "~> 0.1"}]
         end
 
-  2. Ensure metrics is started before your application:
+  2. Ensure exmetrics is started before your application:
 
         def application do
-          [applications: [:metrics]]
+          [applications: [:exmetrics]]
         end
