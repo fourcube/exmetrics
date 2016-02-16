@@ -18,6 +18,7 @@ defmodule Metrics do
   def snapshot do
     Metrics.Worker.state
     |> update_in([:gauges], &realize_gauge/1)
+    |> update_in([:histograms], &merge_all_histograms/1)
   end
 
   defp realize_gauge(gauge) when is_function(gauge), do: apply_no_args(gauge)
@@ -26,6 +27,26 @@ defmodule Metrics do
     |> Enum.reduce(%{}, fn {key, func}, acc ->
       Map.put(acc, key, apply_no_args(func))
     end)
+  end
+
+  defp merge_all_histograms(histograms) do
+    histograms
+    |> Enum.map(&merge_histogram_windows/1)
+  end
+
+  defp merge_histogram_windows({_, histogram} = data) when is_nil(histogram) do
+    data
+  end
+
+  defp merge_histogram_windows({_, %{merged: merged, histograms: windows} = histogram}) do
+    :hdr_histogram.reset(merged)
+
+    windows
+    |> Enum.each(fn src ->
+      :hdr_histogram.add(merged, src)
+    end)
+
+    %{histogram | merged: merged}
   end
 
   defp apply_no_args(func) when is_nil(func) do
@@ -202,28 +223,46 @@ defmodule Metrics do
       0.0
       # Record some values
       iex> Enum.each 0..100, &(Metrics.Histogram.record "sample_histogram", &1)
+      :ok
+      # A snapshot is required before histogram values are up to date
+      iex> Metrics.snapshot
       iex> Metrics.Gauge.get "sample_histogram.P50"
       50.0
     """
     @spec new(String.t, integer, integer) :: atom
     def new(name, max, sigfigs \\ 3) do
-      h = Metrics.Worker.new_histogram(name, max, sigfigs)
+      Metrics.Worker.new_histogram(name, max, sigfigs)
 
       # Register gauges for various percentiles
       #
       # The suffixes are listed in the module attribute @automatic_histogram_gauges.
       # All automatically associated gauges have to be removed before a histogram is removed.
-      Metrics.Gauge.set("#{name}.P50", fn -> :hdr_histogram.percentile(h, 50.0) end)
-      Metrics.Gauge.set("#{name}.P75", fn -> :hdr_histogram.percentile(h, 75.0) end)
-      Metrics.Gauge.set("#{name}.P90", fn -> :hdr_histogram.percentile(h, 90.0) end)
-      Metrics.Gauge.set("#{name}.P95", fn -> :hdr_histogram.percentile(h, 95.0) end)
-      Metrics.Gauge.set("#{name}.P99", fn -> :hdr_histogram.percentile(h, 99.0) end)
-      Metrics.Gauge.set("#{name}.P999", fn -> :hdr_histogram.percentile(h, 99.9) end)
-      Metrics.Gauge.set("#{name}.Max", fn -> :hdr_histogram.max(h) end)
-      Metrics.Gauge.set("#{name}.Min", fn -> :hdr_histogram.min(h) end)
-      Metrics.Gauge.set("#{name}.Mean", fn -> :hdr_histogram.mean(h) end)
-      Metrics.Gauge.set("#{name}.Stddev", fn -> :hdr_histogram.stddev(h) end)
-      Metrics.Gauge.set("#{name}.Count", fn -> :hdr_histogram.get_total_count(h) end)
+      Metrics.Gauge.set("#{name}.P50", fn -> percentile(name, 50.0) end)
+      Metrics.Gauge.set("#{name}.P75", fn -> percentile(name, 75.0) end)
+      Metrics.Gauge.set("#{name}.P90", fn -> percentile(name, 90.0) end)
+      Metrics.Gauge.set("#{name}.P95", fn -> percentile(name, 95.0) end)
+      Metrics.Gauge.set("#{name}.P99", fn -> percentile(name, 99.0) end)
+      Metrics.Gauge.set("#{name}.P999", fn -> percentile(name, 99.9) end)
+      Metrics.Gauge.set("#{name}.Max", fn -> hdr_histogram_apply(name, "max") end)
+      Metrics.Gauge.set("#{name}.Min", fn -> hdr_histogram_apply(name, "min") end)
+      Metrics.Gauge.set("#{name}.Mean", fn -> hdr_histogram_apply(name, "mean") end)
+      Metrics.Gauge.set("#{name}.Stddev", fn -> hdr_histogram_apply(name, "stddev") end)
+      Metrics.Gauge.set("#{name}.Count", fn -> hdr_histogram_apply(name, "get_total_count") end)
+    end
+
+    defp percentile(name, pct) do
+      # Load the 'merged' histogram view
+      get(name)
+      |> get_in([:merged])
+      |> :hdr_histogram.percentile(pct)
+    end
+
+    defp hdr_histogram_apply(name, func) when is_bitstring(func) do
+      # Load the 'merged' histogram view.
+      # It is built when snapshot() is invoked.
+      h = get(name)[:merged]
+
+      apply(:hdr_histogram, String.to_atom(func), [h])
     end
 
     @doc """
@@ -231,7 +270,7 @@ defmodule Metrics do
 
       iex> Metrics.Histogram.new "h1", 1000, 3
       :ok
-      iex> h = Metrics.Histogram.get "h1"
+      iex> h = Metrics.Histogram.get("h1")[:current]
       iex> :hdr_histogram.get_total_count(h)
       0
 
@@ -247,7 +286,7 @@ defmodule Metrics do
       iex> Metrics.Histogram.new "h2", 1000, 3
       :ok
       iex> Metrics.Histogram.record("h2", 5)
-      iex> Metrics.Histogram.get("h2") |> :hdr_histogram.max
+      iex> Metrics.Histogram.get("h2")[:current] |> :hdr_histogram.max
       5
 
     """
@@ -270,7 +309,6 @@ defmodule Metrics do
     def remove(name) do
       Metrics.Worker.remove_histogram(name)
     end
-
   end
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
@@ -281,6 +319,7 @@ defmodule Metrics do
     children = [
       # Define workers and child supervisors to be supervised
       worker(Metrics.Worker, []),
+      worker(Metrics.Rotator, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

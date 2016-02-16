@@ -64,7 +64,7 @@ See [hdr_histogram_erl](https://github.com/HdrHistogram/hdr_histogram_erl) for s
 iex> Metrics.Histogram.new "my_histogram", 1000000, 3
 :ok
 
-# This automatically registers gauges for the histograms
+# This automatically registers gauges for the histogram's
 #   50th percentile
 #   75th percentile
 #   90th percentile

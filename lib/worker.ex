@@ -61,17 +61,38 @@ defmodule Metrics.Worker do
   ###
   # Histograms
   ###
-
-  @doc "Create a new histogram instance."
+  @doc """
+  Create a sliding window histogram which records metrics over 5 minutes.
+  """
   def new_histogram(name, max, sigfigs) when is_integer(max) and is_integer(sigfigs) do
-    {:ok, histogram} = :hdr_histogram.open(max, sigfigs)
-    GenServer.cast Metrics, {:set, [:histograms, name], histogram}
-    histogram
+    init_histogram = fn _ ->
+      {:ok, h} = :hdr_histogram.open(max, sigfigs)
+      h
+    end
+
+    # initialize window, allocate one for a combined view ('merged')
+    histograms = 0..5
+    |> Enum.map(init_histogram)
+
+    # take one for merges
+    [merged|histograms] = histograms
+
+    # pointer to the current histogram
+    current = hd(histograms)
+
+    window = %{
+      index: 0,
+      current: current,
+      merged: merged,
+      histograms: histograms
+    }
+
+    GenServer.cast Metrics, {:set, [:histograms, name], window}
   end
 
   @doc "Register a value inside a histogram."
   def record_histogram_value(name, value) when is_integer(value) do
-    GenServer.cast Metrics, {:record_h, [:histograms, name], value}
+    GenServer.cast Metrics, {:record_h, [:histograms, name, :current], value}
   end
 
   @doc "Get a full histogram."
@@ -79,17 +100,58 @@ defmodule Metrics.Worker do
     GenServer.call Metrics, {:get, [:histograms, name]}
   end
 
+  @doc """
+  Rotate the current recording window of a histogram.
+
+  Before rotation (*current window):
+    [*0 | 1 | 2 | 3 | 4]
+
+  After rotation:
+    [0 | *1 | 2 | 3 | 4]
+
+  The window is cleared *after* it was rotated to.
+  """
+  def rotate_histogram(histogram) when is_bitstring(histogram) do
+    case GenServer.call Metrics, {:get, [:histograms, histogram]} do
+      nil ->
+        :err_not_avail
+      h -> rotate_histogram(h)
+    end
+  end
+
+  def rotate_histogram({key, %{index: index, histograms: histograms} = histogram}) do
+    index = index+1
+    current = Enum.at(histograms, rem(index, length(histograms)))
+    :hdr_histogram.reset(current)
+
+    histogram = %{histogram | current: current, index: index}
+    GenServer.cast Metrics, {:set, [:histograms, key], histogram}
+  end
+
+  @doc "Rotate all registered histograms."
+  def rotate_all_histograms() do
+    get_in(state(), [:histograms])
+    |> Enum.each(&rotate_histogram/1)
+  end
+
   def remove_histogram(histogram_name) do
     case GenServer.call Metrics, {:get, [:histograms, histogram_name]} do
       nil ->
         :err_not_avail
-      h ->
+      hs ->
         # Remove all automatically registered gauges.
         Metrics.Histogram.automatic_histogram_gauges
         |> Enum.each(fn gauge_name -> remove_gauge "#{histogram_name}.#{gauge_name}" end)
 
-        # Close the histogram
-        :hdr_histogram.close(h)
+        # Close all histogram windows
+        hs
+        |> Map.get(:histograms)
+        |> Enum.each(&:hdr_histogram.close/1)
+
+        # ...and the histogram which contains the merged view
+        Map.get(hs, :merged)
+        |> :hdr_histogram.close
+
         remove([:histograms, histogram_name])
         :ok
     end
@@ -125,6 +187,7 @@ defmodule Metrics.Worker do
 
   def handle_cast({:record_h, path, value}, state) do
     histogram = get_in(state, path)
+
     case histogram do
       nil -> nil
       histogram -> :hdr_histogram.record(histogram, value)
