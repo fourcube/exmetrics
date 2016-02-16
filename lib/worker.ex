@@ -1,10 +1,10 @@
-defmodule Metrics.Worker do
+defmodule Exmetrics.Worker do
   @moduledoc false
   use GenServer
   require Logger
 
   def start_link() do
-    GenServer.start_link(__MODULE__, %{counters: %{}, gauges: %{}, histograms: %{}}, name: Metrics)
+    GenServer.start_link(__MODULE__, %{counters: %{}, gauges: %{}, histograms: %{}}, name: Exmetrics)
   end
 
   ###
@@ -12,7 +12,7 @@ defmodule Metrics.Worker do
   ###
   @doc "Snapshot current state."
   def state() do
-    GenServer.call Metrics, :get_state
+    GenServer.call Exmetrics, :get_state
   end
 
   ###
@@ -20,12 +20,12 @@ defmodule Metrics.Worker do
   ###
   @doc "Set gauge to value n."
   def set_gauge(name, n) do
-    GenServer.cast Metrics, {:set, [:gauges, name], n}
+    GenServer.cast Exmetrics, {:set, [:gauges, name], n}
   end
 
   @doc "Get gauge value."
   def get_gauge(name) do
-    v = GenServer.call Metrics, {:get, [:gauges, name]}
+    v = GenServer.call Exmetrics, {:get, [:gauges, name]}
     case v do
       v when is_function(v) -> apply(v, [])
       nil -> nil
@@ -38,7 +38,7 @@ defmodule Metrics.Worker do
   end
 
   defp remove(path) do
-    GenServer.cast Metrics, {:remove, path}
+    GenServer.cast Exmetrics, {:remove, path}
   end
 
   ###
@@ -46,17 +46,17 @@ defmodule Metrics.Worker do
   ###
   @doc "Increment counter by n."
   def increment_counter(name, n) do
-    GenServer.cast Metrics, {:increment_counter, name, n}
+    GenServer.cast Exmetrics, {:increment_counter, name, n}
   end
 
   @doc "Returns the counter value with 'name'. Returns 0 if this counter is unknown."
   def get_counter(name) do
-    GenServer.call Metrics, {:get, [:counters, name]}
+    GenServer.call Exmetrics, {:get, [:counters, name]}
   end
 
   @doc "Reset counter."
   def reset_counter(name, n \\ 0) do
-    GenServer.cast Metrics, {:set, [:counters, name], n}
+    GenServer.cast Exmetrics, {:set, [:counters, name], n}
   end
 
   ###
@@ -88,17 +88,17 @@ defmodule Metrics.Worker do
       histograms: histograms
     }
 
-    GenServer.cast Metrics, {:set, [:histograms, name], window}
+    GenServer.cast Exmetrics, {:set, [:histograms, name], window}
   end
 
   @doc "Register a value inside a histogram."
   def record_histogram_value(name, value) when is_integer(value) do
-    GenServer.cast Metrics, {:record_h, [:histograms, name, :current], value}
+    GenServer.cast Exmetrics, {:record_h, [:histograms, name, :current], value}
   end
 
   @doc "Get a full histogram."
   def get_histogram(name) do
-    GenServer.call Metrics, {:get, [:histograms, name]}
+    GenServer.call Exmetrics, {:get, [:histograms, name]}
   end
 
   @doc """
@@ -113,7 +113,7 @@ defmodule Metrics.Worker do
   The window is cleared *after* it was rotated to.
   """
   def rotate_histogram(histogram) when is_bitstring(histogram) do
-    case GenServer.call Metrics, {:get, [:histograms, histogram]} do
+    case GenServer.call Exmetrics, {:get, [:histograms, histogram]} do
       nil ->
         :err_not_avail
       h -> rotate_histogram(h)
@@ -126,7 +126,7 @@ defmodule Metrics.Worker do
     :hdr_histogram.reset(current)
 
     histogram = %{histogram | current: current, index: index}
-    GenServer.cast Metrics, {:set, [:histograms, key], histogram}
+    GenServer.cast Exmetrics, {:set, [:histograms, key], histogram}
   end
 
   @doc "Rotate all registered histograms."
@@ -136,12 +136,12 @@ defmodule Metrics.Worker do
   end
 
   def remove_histogram(histogram_name) do
-    case GenServer.call Metrics, {:get, [:histograms, histogram_name]} do
+    case GenServer.call Exmetrics, {:get, [:histograms, histogram_name]} do
       nil ->
         :err_not_avail
       hs ->
         # Remove all automatically registered gauges.
-        Metrics.Histogram.automatic_histogram_gauges
+        Exmetrics.Histogram.automatic_histogram_gauges
         |> Enum.each(fn gauge_name -> remove_gauge "#{histogram_name}.#{gauge_name}" end)
 
         # Close all histogram windows

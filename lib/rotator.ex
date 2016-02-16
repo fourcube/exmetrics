@@ -1,4 +1,4 @@
-defmodule Metrics.Rotator do
+defmodule Exmetrics.Rotator do
   @moduledoc false
   require Logger
 
@@ -11,7 +11,7 @@ defmodule Metrics.Rotator do
 
   defp rotate do
     :timer.sleep(60 * 1000)
-    Metrics.Worker.rotate_all_histograms()
+    Exmetrics.Worker.rotate_all_histograms()
 
     # recurse
     rotate

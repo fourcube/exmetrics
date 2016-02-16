@@ -1,9 +1,9 @@
-defmodule MetricsTest do
+defmodule ExmetricsTest do
   use ExUnit.Case
-  doctest Metrics.Counter
-  doctest Metrics.Gauge
-  doctest Metrics.Histogram
-  doctest Metrics
+  doctest Exmetrics.Counter
+  doctest Exmetrics.Gauge
+  doctest Exmetrics.Histogram
+  doctest Exmetrics
 
 
 end

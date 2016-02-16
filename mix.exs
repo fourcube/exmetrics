@@ -3,13 +3,13 @@ defmodule Metrics.Mixfile do
 
   def project do
     [app: :exmetrics,
-     version: "0.1.1",
+     version: "0.2.0",
      name: "exmetrics",
      description: "Metrics provides counters, gauges and histograms for instrumenting an elixir application.",
      elixir: "~> 1.2-rc",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     source_url: "https://github.com/fourcube/metrics",
+     source_url: "https://github.com/fourcube/exmetrics",
      deps: deps,
      package: [
        files: ["lib", "mix.exs", "README*", "LICENSE*"],
@@ -24,7 +24,7 @@ defmodule Metrics.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger],
-     mod: {Metrics, []}]
+     mod: {Exmetrics, []}]
   end
 
   # Dependencies can be Hex packages:

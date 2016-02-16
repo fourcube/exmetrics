@@ -1,13 +1,13 @@
-defmodule Metrics do
+defmodule Exmetrics do
   use Application
   require Logger
 
   @doc """
   Returns all registered metrics.
 
-      iex> Metrics.Counter.incr("sample_counter")
-      iex> Metrics.Gauge.set("sample_gauge", 1)
-      iex> snapshot = Metrics.snapshot
+      iex> Exmetrics.Counter.incr("sample_counter")
+      iex> Exmetrics.Gauge.set("sample_gauge", 1)
+      iex> snapshot = Exmetrics.snapshot
       iex> get_in(snapshot, [:counters, "sample_counter"])
       1
       iex> get_in(snapshot, [:gauges, "sample_gauge"])
@@ -16,7 +16,7 @@ defmodule Metrics do
   """
   @spec snapshot() :: map()
   def snapshot do
-    Metrics.Worker.state
+    Exmetrics.Worker.state
     |> update_in([:gauges], &realize_gauge/1)
     |> update_in([:histograms], &merge_all_histograms/1)
   end
@@ -67,59 +67,59 @@ defmodule Metrics do
     @doc ~S"""
     Set a gauge to return the value of a lazy evaluated function.
 
-        iex> Metrics.Gauge.set "foo_fn", fn -> 1 end
+        iex> Exmetrics.Gauge.set "foo_fn", fn -> 1 end
         :ok
-        iex> Metrics.Gauge.get "foo_fn"
+        iex> Exmetrics.Gauge.get "foo_fn"
         1
 
     Set a gauge to a certain value.
 
-        iex> Metrics.Gauge.set "foo", 1
+        iex> Exmetrics.Gauge.set "foo", 1
         :ok
-        iex> Metrics.Gauge.get "foo"
+        iex> Exmetrics.Gauge.get "foo"
         1
     """
     @spec set(String.t, function) :: atom
     def set(name, func) when is_function(func) do
-      Metrics.Worker.set_gauge(name, func)
+      Exmetrics.Worker.set_gauge(name, func)
     end
 
     @spec set(String.t, integer) :: atom
     def set(name, value) do
-      Metrics.Worker.set_gauge(name, fn -> value end)
+      Exmetrics.Worker.set_gauge(name, fn -> value end)
     end
 
     @doc ~S"""
     Get the value of a gauge.
 
-        iex> Metrics.Gauge.set "bar", 10
+        iex> Exmetrics.Gauge.set "bar", 10
         :ok
-        iex> Metrics.Gauge.get "bar"
+        iex> Exmetrics.Gauge.get "bar"
         10
 
-        iex> Metrics.Gauge.get "doesnt_exist"
+        iex> Exmetrics.Gauge.get "doesnt_exist"
         nil
     """
     @spec get(String.t) :: (integer | nil)
     def get(name) do
-      Metrics.Worker.get_gauge(name)
+      Exmetrics.Worker.get_gauge(name)
     end
 
     @doc ~S"""
     Remove a gauge from the metrics collection.
 
-        iex> Metrics.Gauge.set "to_be_removed", 10
+        iex> Exmetrics.Gauge.set "to_be_removed", 10
         :ok
-        iex> Metrics.Gauge.get "to_be_removed"
+        iex> Exmetrics.Gauge.get "to_be_removed"
         10
-        iex> Metrics.Gauge.remove "to_be_removed"
+        iex> Exmetrics.Gauge.remove "to_be_removed"
         :ok
-        iex> Metrics.Gauge.get "to_be_removed"
+        iex> Exmetrics.Gauge.get "to_be_removed"
         nil
     """
     @spec remove(String.t) :: atom
     def remove(name) do
-      Metrics.Worker.remove_gauge(name)
+      Exmetrics.Worker.remove_gauge(name)
     end
   end
 
@@ -131,69 +131,69 @@ defmodule Metrics do
     @doc ~S"""
     Increments the counter 'name' by 1.
 
-        iex> Metrics.Counter.incr "foo"
+        iex> Exmetrics.Counter.incr "foo"
         :ok
-        iex> Metrics.Counter.get "foo"
+        iex> Exmetrics.Counter.get "foo"
         1
     """
     @spec incr(String.t) :: atom
     def incr(name) do
-      Metrics.Worker.increment_counter(name, 1)
+      Exmetrics.Worker.increment_counter(name, 1)
     end
 
     @doc ~S"""
     Increments the counter 'name' by n.
 
-        iex> Metrics.Counter.add "bar", 5
+        iex> Exmetrics.Counter.add "bar", 5
         :ok
-        iex> Metrics.Counter.get "bar"
+        iex> Exmetrics.Counter.get "bar"
         5
     """
     @spec add(String.t, integer) :: atom
     def add(name, n) when is_integer(n)  do
-      Metrics.Worker.increment_counter(name, n)
+      Exmetrics.Worker.increment_counter(name, n)
     end
 
     @doc ~S"""
     Gets the value of a counter.
 
-        iex> Metrics.Counter.add "baz", 42
+        iex> Exmetrics.Counter.add "baz", 42
         :ok
-        iex> Metrics.Counter.get "baz"
+        iex> Exmetrics.Counter.get "baz"
         42
 
-        iex> Metrics.Counter.get "doesnt_exist"
+        iex> Exmetrics.Counter.get "doesnt_exist"
         nil
     """
     @spec get(String.t) :: integer | nil
     def get(name) do
-      Metrics.Worker.get_counter(name)
+      Exmetrics.Worker.get_counter(name)
     end
 
     @doc ~S"""
     Reset counter 'name' to 0.
 
-        iex> Metrics.Counter.reset "reset_to_zero"
+        iex> Exmetrics.Counter.reset "reset_to_zero"
         :ok
-        iex> Metrics.Counter.get "reset_to_zero"
+        iex> Exmetrics.Counter.get "reset_to_zero"
         0
     """
     @spec reset(String.t) :: atom
     def reset(name) do
-      Metrics.Worker.reset_counter(name, 0)
+      Exmetrics.Worker.reset_counter(name, 0)
     end
 
     @doc ~S"""
     Reset counter 'name' to n.
 
-        iex> Metrics.Counter.reset "reset_to_fourty_two", 42
+        iex> Exmetrics.Counter.reset "reset_to_fourty_two", 42
         :ok
-        iex> Metrics.Counter.get "reset_to_fourty_two"
+        iex> Exmetrics.Counter.get "reset_to_fourty_two"
         42
     """
     @spec reset(String.t, integer) :: atom
     def reset(name, n) when is_integer(n) do
-      Metrics.Worker.reset_counter(name, n)
+      Exmetrics.Worker.reset_counter(name, n)
     end
   end
 
@@ -205,7 +205,7 @@ defmodule Metrics do
     Use a histogram to track the distribution of a stream of values (e.g., the
     latency associated with HTTP requests).
 
-    Before loading data from a histogram, create a snapshot via Metrics.snapshot/0.
+    Before loading data from a histogram, create a snapshot via Exmetrics.snapshot/0.
     """
 
     # All automatically associated gauges have to be removed before a histogram is removed.
@@ -220,37 +220,37 @@ defmodule Metrics do
     @doc """
     Create a new histogram.
 
-        iex> Metrics.Histogram.new "sample_histogram", 1000000, 3
+        iex> Exmetrics.Histogram.new "sample_histogram", 1000000, 3
         :ok
-        iex> Metrics.Gauge.get "sample_histogram.P50"
+        iex> Exmetrics.Gauge.get "sample_histogram.P50"
         0.0
         # Record some values
-        iex> Enum.each 0..100, &(Metrics.Histogram.record "sample_histogram", &1)
+        iex> Enum.each 0..100, &(Exmetrics.Histogram.record "sample_histogram", &1)
         :ok
         # A snapshot is required before histogram values are up to date
-        iex> Metrics.snapshot
-        iex> Metrics.Gauge.get "sample_histogram.P50"
+        iex> Exmetrics.snapshot
+        iex> Exmetrics.Gauge.get "sample_histogram.P50"
         50.0
     """
     @spec new(String.t, integer, integer) :: atom
     def new(name, max, sigfigs \\ 3) do
-      Metrics.Worker.new_histogram(name, max, sigfigs)
+      Exmetrics.Worker.new_histogram(name, max, sigfigs)
 
       # Register gauges for various percentiles
       #
       # The suffixes are listed in the module attribute @automatic_histogram_gauges.
       # All automatically associated gauges have to be removed before a histogram is removed.
-      Metrics.Gauge.set("#{name}.P50", fn -> percentile(name, 50.0) end)
-      Metrics.Gauge.set("#{name}.P75", fn -> percentile(name, 75.0) end)
-      Metrics.Gauge.set("#{name}.P90", fn -> percentile(name, 90.0) end)
-      Metrics.Gauge.set("#{name}.P95", fn -> percentile(name, 95.0) end)
-      Metrics.Gauge.set("#{name}.P99", fn -> percentile(name, 99.0) end)
-      Metrics.Gauge.set("#{name}.P999", fn -> percentile(name, 99.9) end)
-      Metrics.Gauge.set("#{name}.Max", fn -> hdr_histogram_apply(name, "max") end)
-      Metrics.Gauge.set("#{name}.Min", fn -> hdr_histogram_apply(name, "min") end)
-      Metrics.Gauge.set("#{name}.Mean", fn -> hdr_histogram_apply(name, "mean") end)
-      Metrics.Gauge.set("#{name}.Stddev", fn -> hdr_histogram_apply(name, "stddev") end)
-      Metrics.Gauge.set("#{name}.Count", fn -> hdr_histogram_apply(name, "get_total_count") end)
+      Exmetrics.Gauge.set("#{name}.P50", fn -> percentile(name, 50.0) end)
+      Exmetrics.Gauge.set("#{name}.P75", fn -> percentile(name, 75.0) end)
+      Exmetrics.Gauge.set("#{name}.P90", fn -> percentile(name, 90.0) end)
+      Exmetrics.Gauge.set("#{name}.P95", fn -> percentile(name, 95.0) end)
+      Exmetrics.Gauge.set("#{name}.P99", fn -> percentile(name, 99.0) end)
+      Exmetrics.Gauge.set("#{name}.P999", fn -> percentile(name, 99.9) end)
+      Exmetrics.Gauge.set("#{name}.Max", fn -> hdr_histogram_apply(name, "max") end)
+      Exmetrics.Gauge.set("#{name}.Min", fn -> hdr_histogram_apply(name, "min") end)
+      Exmetrics.Gauge.set("#{name}.Mean", fn -> hdr_histogram_apply(name, "mean") end)
+      Exmetrics.Gauge.set("#{name}.Stddev", fn -> hdr_histogram_apply(name, "stddev") end)
+      Exmetrics.Gauge.set("#{name}.Count", fn -> hdr_histogram_apply(name, "get_total_count") end)
     end
 
     defp percentile(name, pct) do
@@ -270,47 +270,47 @@ defmodule Metrics do
     @doc """
     Get a full histogram.
 
-        iex> Metrics.Histogram.new "h1", 1000, 3
+        iex> Exmetrics.Histogram.new "h1", 1000, 3
         :ok
-        iex> h = Metrics.Histogram.get "h1"
+        iex> h = Exmetrics.Histogram.get "h1"
         iex> :hdr_histogram.get_total_count(h)
         0
 
     """
     @spec get(String.t) :: :hdr_histogram
     def get(name) do
-      Metrics.Worker.get_histogram(name)[:merged]
+      Exmetrics.Worker.get_histogram(name)[:merged]
     end
 
     @doc """
     Record a value in a histogram.
 
-        iex> Metrics.Histogram.new "h2", 1000, 3
+        iex> Exmetrics.Histogram.new "h2", 1000, 3
         :ok
-        iex> Metrics.Histogram.record "h2", 5
-        iex> Metrics.snapshot
-        iex> Metrics.Histogram.get("h2") |> :hdr_histogram.max
+        iex> Exmetrics.Histogram.record "h2", 5
+        iex> Exmetrics.snapshot
+        iex> Exmetrics.Histogram.get("h2") |> :hdr_histogram.max
         5
 
     """
     @spec record(String.t, integer) :: atom
     def record(name, value) do
-      Metrics.Worker.record_histogram_value(name, value)
+      Exmetrics.Worker.record_histogram_value(name, value)
     end
 
     @doc """
     Remove histogram and clear resources.
 
-        iex> Metrics.Histogram.new "h3", 1000, 3
+        iex> Exmetrics.Histogram.new "h3", 1000, 3
         :ok
-        iex> Metrics.Histogram.remove "h3"
+        iex> Exmetrics.Histogram.remove "h3"
         :ok
-        iex> Metrics.Histogram.get "h3"
+        iex> Exmetrics.Histogram.get "h3"
         nil
     """
     @spec remove(String.t) :: atom
     def remove(name) do
-      Metrics.Worker.remove_histogram(name)
+      Exmetrics.Worker.remove_histogram(name)
     end
   end
 
@@ -320,13 +320,13 @@ defmodule Metrics do
 
     children = [
       # Define workers and child supervisors to be supervised
-      worker(Metrics.Worker, []),
-      worker(Metrics.Rotator, []),
+      worker(Exmetrics.Worker, []),
+      worker(Exmetrics.Rotator, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Metrics.Supervisor]
+    opts = [strategy: :one_for_one, name: Exmetrics.Supervisor]
 
     Supervisor.start_link(children, opts)
   end
