@@ -3,9 +3,9 @@ defmodule Metrics.Mixfile do
 
   def project do
     [app: :exmetrics,
-     version: "0.2.0",
+     version: "0.2.1",
      name: "exmetrics",
-     description: "Metrics provides counters, gauges and histograms for instrumenting an elixir application.",
+     description: "Exmetrics provides counters, gauges and histograms for instrumenting an elixir application.",
      elixir: "~> 1.2-rc",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -23,7 +23,7 @@ defmodule Metrics.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger],
+    [applications: [:logger, :hdr_histogram],
      mod: {Exmetrics, []}]
   end
 
