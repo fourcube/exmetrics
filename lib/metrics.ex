@@ -274,13 +274,12 @@ defmodule Exmetrics do
 
         iex> Exmetrics.Histogram.new "h1", 1000, 3
         :ok
-        iex> h = Exmetrics.Histogram.get "h1"
-        iex> :hdr_histogram.get_total_count(h)
+        iex> Exmetrics.Gauge.get "h1.Count"
         0
 
     """
     @spec get(String.t) :: :hdr_histogram
-    def get(name) do
+    defp get(name) do
       Exmetrics.Worker.get_histogram(name)[:merged]
     end
 
@@ -291,7 +290,7 @@ defmodule Exmetrics do
         :ok
         iex> Exmetrics.Histogram.record "h2", 5
         iex> Exmetrics.snapshot
-        iex> Exmetrics.Histogram.get("h2") |> :hdr_histogram.max
+        iex> Exmetrics.Gauge.get "h2.Max"
         5
 
     """
@@ -307,7 +306,7 @@ defmodule Exmetrics do
         :ok
         iex> Exmetrics.Histogram.remove "h3"
         :ok
-        iex> Exmetrics.Histogram.get "h3"
+        iex> Exmetrics.Gauge.get "h3.Count"
         nil
     """
     @spec remove(String.t) :: atom

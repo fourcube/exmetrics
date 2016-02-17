@@ -108,7 +108,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 
         def deps do
           [
-            {:metrics, "~> 0.1"},
+            {:metrics, "~> 1.0"},
             {:hdr_histogram, git: "https://github.com/HdrHistogram/hdr_histogram_erl.git", tag: "0.2.6"}
           ]
         end
