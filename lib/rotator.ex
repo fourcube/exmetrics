@@ -10,7 +10,7 @@ defmodule Exmetrics.Rotator do
   end
 
   defp rotate do
-    :timer.sleep(60 * 1000)
+    :timer.sleep(1000)
     Exmetrics.Worker.rotate_all_histograms()
 
     # recurse

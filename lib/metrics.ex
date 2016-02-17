@@ -19,6 +19,7 @@ defmodule Exmetrics do
     Exmetrics.Worker.state
     |> update_in([:gauges], &realize_gauge/1)
     |> update_in([:histograms], &merge_all_histograms/1)
+    |> Dict.delete(:histograms)
   end
 
   defp realize_gauge(gauge) when is_function(gauge), do: apply_no_args(gauge)
@@ -34,11 +35,12 @@ defmodule Exmetrics do
     |> Enum.map(&merge_histogram_windows/1)
   end
 
-  defp merge_histogram_windows({_, histogram} = data) when is_nil(histogram) do
-    data
+  defp merge_histogram_windows({_, histogram} = window) when is_nil(histogram) do
+    window
   end
 
-  defp merge_histogram_windows({_, %{merged: merged, histograms: windows} = histogram}) do
+  defp merge_histogram_windows({key, histogram}) do
+    %{merged: merged, histograms: windows} = histogram
     :hdr_histogram.reset(merged)
 
     windows
@@ -46,7 +48,7 @@ defmodule Exmetrics do
       :hdr_histogram.add(merged, src)
     end)
 
-    %{histogram | merged: merged}
+    {key, %{histogram | merged: merged}}
   end
 
   defp apply_no_args(func) when is_nil(func) do

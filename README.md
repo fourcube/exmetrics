@@ -91,7 +91,7 @@ iex> Metrics.snapshot
     "my_histogram.P50" => 50.0, "my_histogram.P75" => 76.0,
     "my_histogram.P90" => 91.0, "my_histogram.P95" => 96.0,
     "my_histogram.P99" => 100.0, "my_histogram.P999" => 100.0,
-    "my_histogram.Stddev" => 29.4}, histograms: %{"my_histogram" => ""}}
+    "my_histogram.Stddev" => 29.4}}
 
 # Remove a histogram
 iex> Metrics.Histogram.remove "my_histogram"
@@ -104,10 +104,13 @@ iex> Metrics.Histogram.remove "my_histogram"
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
 
-  1. Add exmetrics to your list of dependencies in `mix.exs`:
+  1. Add exmetrics and hdr_histogram to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:metrics, "~> 0.1"}]
+          [
+            {:metrics, "~> 0.1"},
+            {:hdr_histogram, git: "https://github.com/HdrHistogram/hdr_histogram_erl.git", tag: "0.2.6"}
+          ]
         end
 
   2. Ensure exmetrics is started before your application:
