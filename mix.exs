@@ -43,7 +43,8 @@ defmodule Metrics.Mixfile do
       # Development only
       {:markdown, github: "devinus/markdown"},
       {:dialyxir, "~> 0.3", only: :dev},
-      {:ex_doc, "~> 0.11", only: :dev}
+      {:ex_doc, "~> 0.11", only: :dev},
+      {:benchfella, "~> 0.3.0", only: :dev}
     ]
   end
 end

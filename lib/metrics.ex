@@ -22,6 +22,21 @@ defmodule Exmetrics do
     |> Dict.delete(:histograms)
   end
 
+  @doc """
+    Resets all registed metrics. Automatically performs a snapshot.
+
+        iex> Exmetrics.Counter.incr "before_reset"
+        iex> Exmetrics.Counter.get "before_reset"
+        1
+        iex> Exmetrics.reset
+        %{counters: %{}, gauges: %{}}
+  """
+  @spec reset() :: map()
+  def reset do
+    Exmetrics.Worker.reset
+    snapshot
+  end
+
   defp realize_gauge(gauge) when is_function(gauge), do: apply_no_args(gauge)
   defp realize_gauge(gauge_map) when is_map(gauge_map) do
     gauge_map

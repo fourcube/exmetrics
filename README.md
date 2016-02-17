@@ -99,6 +99,30 @@ iex> Metrics.Histogram.remove "my_histogram"
 
 ```
 
+## Benchmark
+
+The benchmarks were performed on a MacBook Pro (13 Zoll, Mid 2012), with 8 GB 1600 MHz DDR3 RAM. You can repeat them with
+
+```
+git clone https://github.com/fourcube/exmetrics.git; cd exmetrics
+mix deps.get
+mix bench
+```
+
+#### Results
+```
+## Exmetrics.Bench
+Exmetrics.record/2                        1000000   1.21 µs/op
+Exmetrics.Counter.incr/1                  1000000   1.37 µs/op
+Exmetrics.Counter.add/2                   1000000   1.50 µs/op
+Exmetrics.Gauge.set/2                     1000000   1.57 µs/op
+Exmetrics.Counter.get/1                    500000   5.70 µs/op
+Exmetrics.Gauge.get/1                      500000   6.03 µs/op
+Exmetrics.snapshot/0 - 1 histogram          20000   102.50 µs/op
+Exmetrics.Histogram.new/3                   10000   358.51 µs/op
+Exmetrics.snapshot/0 - 10 histograms         1000   1033.07 µs/op
+Exmetrics.snapshot/0 - 100 histograms         100   10444.18 µs/op
+```
 
 ## Installation
 

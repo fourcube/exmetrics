@@ -3,16 +3,25 @@ defmodule Exmetrics.Worker do
   use GenServer
   require Logger
 
+  @initial_state %{counters: %{}, gauges: %{}, histograms: %{}}
+
   def start_link() do
-    GenServer.start_link(__MODULE__, %{counters: %{}, gauges: %{}, histograms: %{}}, name: Exmetrics)
+    GenServer.start_link(__MODULE__, @initial_state, name: Exmetrics)
   end
 
   ###
   # Snapshot
   ###
   @doc "Snapshot current state."
-  def state() do
+  def state do
     GenServer.call Exmetrics, :get_state
+  end
+
+  ###
+  # Reset
+  ###
+  def reset do
+    GenServer.cast Exmetrics, :reset
   end
 
   ###
@@ -135,28 +144,38 @@ defmodule Exmetrics.Worker do
     |> Enum.each(&rotate_histogram/1)
   end
 
-  def remove_histogram(histogram_name) do
-    case GenServer.call Exmetrics, {:get, [:histograms, histogram_name]} do
+  def remove_all_histograms() do
+    get_in(state(), [:histograms])
+    |> Enum.each(&remove_histogram/1)
+  end
+
+  def remove_histogram(histogram) when is_bitstring(histogram) do
+    case GenServer.call Exmetrics, {:get, [:histograms, histogram]} do
       nil ->
         :err_not_avail
-      hs ->
-        # Remove all automatically registered gauges.
-        Exmetrics.Histogram.automatic_histogram_gauges
-        |> Enum.each(fn gauge_name -> remove_gauge "#{histogram_name}.#{gauge_name}" end)
-
-        # Close all histogram windows
-        hs
-        |> Map.get(:histograms)
-        |> Enum.each(&:hdr_histogram.close/1)
-
-        # ...and the histogram which contains the merged view
-        Map.get(hs, :merged)
-        |> :hdr_histogram.close
-
-        remove([:histograms, histogram_name])
-        :ok
+      hs -> remove_histogram({histogram, hs})
     end
   end
+
+  def remove_histogram({key, histogram}) do
+    # Remove all automatically registered gauges.
+    Exmetrics.Histogram.automatic_histogram_gauges
+    |> Enum.each(fn gauge_name -> remove_gauge "#{key}.#{gauge_name}" end)
+
+    # Close all histogram windows
+    histogram
+    |> Map.get(:histograms)
+    |> Enum.each(&:hdr_histogram.close/1)
+
+    # ...and the histogram which contains the merged view
+    Map.get(histogram, :merged)
+    |> :hdr_histogram.close
+
+    remove([:histograms, key])
+    :ok
+  end
+
+
 
 
   ###
@@ -195,6 +214,11 @@ defmodule Exmetrics.Worker do
     end
 
     {:noreply, state}
+  end
+
+  def handle_cast(:reset, _state) do
+
+    {:noreply, @initial_state}
   end
 
   ###
