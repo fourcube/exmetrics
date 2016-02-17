@@ -23,13 +23,13 @@ defmodule Exmetrics do
   end
 
   @doc """
-    Resets all registed metrics. Automatically performs a snapshot.
+  Resets all registed metrics. Automatically performs a snapshot.
 
-        iex> Exmetrics.Counter.incr "before_reset"
-        iex> Exmetrics.Counter.get "before_reset"
-        1
-        iex> Exmetrics.reset
-        %{counters: %{}, gauges: %{}}
+      iex> Exmetrics.Counter.incr "before_reset"
+      iex> Exmetrics.Counter.get "before_reset"
+      1
+      iex> Exmetrics.reset
+      %{counters: %{}, gauges: %{}}
   """
   @spec reset() :: map()
   def reset do
