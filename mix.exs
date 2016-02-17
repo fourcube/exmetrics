@@ -3,7 +3,7 @@ defmodule Metrics.Mixfile do
 
   def project do
     [app: :exmetrics,
-     version: "1.0.0",
+     version: "1.1.0",
      name: "exmetrics",
      description: "Exmetrics provides counters, gauges and histograms for instrumenting an elixir application.",
      elixir: "~> 1.2-rc",
